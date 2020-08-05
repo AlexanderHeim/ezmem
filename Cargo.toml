@@ -1,0 +1,16 @@
+[package]
+name = "ezmem"
+version = "0.1.3"
+authors = ["Alexander Heim"]
+description = "Very basic library that provides simple functions for external memory hacking on Windows."
+license = "MIT"
+repository = "https://github.com/AlexanderHeim/ezmem"
+keywords = ["memory", "hacking", "cheat"]
+categories = ["memory-management"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+libc = "0.2.74"
+winapi = { version = "0.3.9", features = ["tlhelp32", "stralign", "handleapi", "winbase", "memoryapi", "wow64apiset"]}
