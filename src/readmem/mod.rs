@@ -3,14 +3,13 @@ use winapi::um::winnt::{HANDLE};
 use winapi::um::memoryapi::{ReadProcessMemory};
 use winapi::um::wow64apiset::IsWow64Process;
 
-//Reads bytes in memory to a Vec<u8>
+///Reads bytes in memory to a Vec<u8>.
 pub unsafe fn read_bytes(handle: HANDLE, address: usize, amount: usize) -> Vec<u8> {
     let bytes: Vec<u8> = vec![0; amount];
     ReadProcessMemory(handle, address as LPCVOID, bytes.as_ptr() as LPVOID, amount, std::ptr::null_mut());
     bytes
 }
 
-//Read Memory Functions for some primitive types.
 pub unsafe fn read_i64(handle: HANDLE, address: usize) -> i64 {
     read_primitive(handle, address)
 }
@@ -57,7 +56,7 @@ unsafe fn read_primitive<T: Default>(handle: HANDLE, address: usize) -> T {
     read_result
 }
 
-//Resolves multilevel pointer -> returns last address (not value).
+///Resolves multilevel pointer -> returns last address of a multi level pointer.
 pub unsafe fn resolve_multi_level_pointer(handle: HANDLE, base_ptr: usize, offsets: Vec<usize>) -> usize {
 
     let mut pointer_size = 8;

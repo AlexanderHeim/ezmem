@@ -4,8 +4,7 @@ use winapi::um::winnt::{HANDLE, PAGE_EXECUTE_READWRITE};
 
 
 
-
-//Write bytes in Vec<u8> to memory location.
+///Writes bytes in Vec<u8> to memory location.
 pub unsafe fn write_bytes(handle: HANDLE, address: usize, bytes: Vec<u8>) {
     WriteProcessMemory(handle, address as LPVOID, bytes.as_ptr() as LPVOID, bytes.len(), std::ptr::null_mut());
 }
@@ -56,8 +55,8 @@ unsafe fn write_primitive<T>(handle: HANDLE, address: usize, to_write: T) {
     WriteProcessMemory(handle, address as LPVOID, &mut buffer as *mut _ as LPCVOID, std::mem::size_of::<T>(), std::ptr::null_mut());
 }
 
-//Changes memory protection to writeable and overrides memory.
-//Used to inject/change code in code loaded into memory.
+///Changes memory protection to writeable and overrides memory. Then sets memory protection to original state.
+///Used to inject/change code in code loaded into memory.
 pub unsafe fn patch_ex(handle: HANDLE, address: usize, bytes: Vec<u8>) {
 
     let mut last_protection: u32 = 0;

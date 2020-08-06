@@ -5,7 +5,13 @@ use winapi::um::winbase::{lstrcmpiA};
 use std::ffi::CString;
 use std::mem;
 
-//GETS THE PROCESS ID OF A PROCESS BY EXECUTABLE NAME
+/// Gets a process id by process name.
+/// # Examples
+/// 
+/// Basic usage:
+/// ```
+/// let id = get_process_id("DARKSOULS.exe")?;
+/// ```
 pub unsafe fn get_process_id(process_name: &str) -> Result<DWORD, &str> {
 
     let h_process_snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -36,7 +42,13 @@ pub unsafe fn get_process_id(process_name: &str) -> Result<DWORD, &str> {
     Err("Couldn't get Process ID")
 }
 
-//GETS THE MODULE BASE ADDRESS OF A MODULE
+/// Gets a module base address by process id and module name.
+/// # Examples
+/// 
+/// Basic usage:
+/// ```
+/// let module_base = get_module_base(id, "DARKSOULS.exe")?;
+/// ```
 pub unsafe fn get_module_base(process_id: DWORD, name: &str) -> Result<usize, &str> {
 
     let module_name = CString::new(name).expect("Couldn't create CString!");
