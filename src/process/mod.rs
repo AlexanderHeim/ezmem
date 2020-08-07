@@ -1,79 +1,74 @@
-use winapi::shared::minwindef::{DWORD};
 use winapi::um::tlhelp32::*;
 use winapi::um::handleapi::*;
-use winapi::um::winbase::{lstrcmpiA};
-use std::ffi::CString;
+use std::ffi::{CString, CStr};
 use std::mem;
+use winapi::um::errhandlingapi::GetLastError;
 
-/// Gets a process id by process name.
-/// # Examples
-/// 
-/// Basic usage:
-/// ```
-/// let id = get_process_id("DARKSOULS.exe")?;
-/// ```
-pub unsafe fn get_process_id(process_name: &str) -> Result<DWORD, &str> {
 
-    let h_process_snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    let process_name = CString::new(process_name).expect("Couldn't convert String to CString!");
+pub fn get_process_id(process_name: &str) -> Option<u32> {
+    unsafe {
 
-    if h_process_snap == INVALID_HANDLE_VALUE {
-        return Err("INVALID HANDLE VALUE!");
-    }
+        let h_process_snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        let process_name = CString::new(process_name).expect("Couldn't convert process_name to CString!");
 
-    let mut pe32: PROCESSENTRY32 = std::mem::zeroed();
-    pe32.dwSize = mem::size_of::<PROCESSENTRY32>() as u32;
-
-    if Process32First(h_process_snap, &mut pe32) != 0 {
-        if lstrcmpiA(&pe32.szExeFile as *const i8, process_name.as_ptr()) == 0 {
-            let id = pe32.th32ProcessID;
-            CloseHandle(h_process_snap);
-            return Ok(id);
+        if h_process_snap == INVALID_HANDLE_VALUE {
+            panic!("Last OS Error: {}", GetLastError());
         }
-    }
-    
-    while Process32Next(h_process_snap, &mut pe32) != 0 {
-        if lstrcmpiA(&pe32.szExeFile as *const i8, process_name.as_ptr()) == 0 {
-            let id = pe32.th32ProcessID;
-            CloseHandle(h_process_snap);
-            return Ok(id);
+
+        let mut pe32: PROCESSENTRY32 = std::mem::zeroed();
+        pe32.dwSize = mem::size_of::<PROCESSENTRY32>() as u32;
+
+        if Process32First(h_process_snap, &mut pe32) != 0 {
+            let current_exe_name = CStr::from_ptr(&pe32.szExeFile as *const i8);
+            if current_exe_name == process_name.as_c_str() {
+                let id = pe32.th32ProcessID;
+                CloseHandle(h_process_snap);
+                return Some(id);
+            }
         }
+
+        while Process32Next(h_process_snap, &mut pe32) != 0 {
+            let current_exe_name = CStr::from_ptr(&pe32.szExeFile as *const i8);
+            if current_exe_name == process_name.as_c_str() {
+                let id = pe32.th32ProcessID;
+                CloseHandle(h_process_snap);
+                return Some(id);
+            }
+        }
+        CloseHandle(h_process_snap);
     }
-    Err("Couldn't get Process ID")
+    None
 }
 
-/// Gets a module base address by process id and module name.
-/// # Examples
-/// 
-/// Basic usage:
-/// ```
-/// let module_base = get_module_base(id, "DARKSOULS.exe")?;
-/// ```
-pub unsafe fn get_module_base(process_id: DWORD, name: &str) -> Result<usize, &str> {
+pub fn get_module_base(process_id: u32, module_name: &str) -> Option<usize> {
+    unsafe {
 
-    let module_name = CString::new(name).expect("Couldn't create CString!");
-    let handle_snap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, process_id);
+        let m_name = CString::new(module_name).expect("Couldn't convert module_name to CString!");
+        let h_module_snap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, process_id);
 
-    if handle_snap == INVALID_HANDLE_VALUE {
-        CloseHandle(handle_snap);
-        return Err("Couldn't get Snapshot!");
-    }
-
-    let mut module_entry: MODULEENTRY32 = mem::zeroed();
-    module_entry.dwSize = mem::size_of::<MODULEENTRY32>() as u32;
-
-    if Module32First(handle_snap, &mut module_entry) != 0 {
-        if lstrcmpiA(&module_entry.szModule[0], module_name.as_ptr()) == 0 {
-            CloseHandle(handle_snap);
-            return Ok(module_entry.modBaseAddr as usize);
+        if h_module_snap == INVALID_HANDLE_VALUE {
+            CloseHandle(h_module_snap);
+            panic!("Last OS Error: {}", GetLastError());
         }
-    }
-    while Module32Next(handle_snap, &mut module_entry) != 0 {
-        if lstrcmpiA(&module_entry.szModule[0], module_name.as_ptr()) == 0 {
-            CloseHandle(handle_snap);
-            return Ok(module_entry.modBaseAddr as usize);
-        }
-    }
 
-    Err("Couldn't get Modulebase!")
+        let mut module_entry: MODULEENTRY32 = mem::zeroed();
+        module_entry.dwSize = mem::size_of::<MODULEENTRY32>() as u32;
+
+        if Module32First(h_module_snap, &mut module_entry) != 0 {
+            let current_module_name = CStr::from_ptr(&module_entry.szModule as *const i8);
+            if current_module_name == m_name.as_c_str() {
+                CloseHandle(h_module_snap);
+                return Some(module_entry.modBaseAddr as usize);
+            }
+        }
+        while Module32Next(h_module_snap, &mut module_entry) != 0 {
+            let current_module_name = CStr::from_ptr(&module_entry.szModule as *const i8);
+            if current_module_name == m_name.as_c_str() {
+                CloseHandle(h_module_snap);
+                return Some(module_entry.modBaseAddr as usize);
+            }
+        }
+    
+    }
+    None
 }
