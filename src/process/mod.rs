@@ -39,6 +39,7 @@ pub unsafe fn get_process_id(process_name: &str) -> Result<DWORD, &str> {
             return Ok(id);
         }
     }
+    CloseHandle(h_process_snap);
     Err("Couldn't get Process ID")
 }
 
@@ -75,5 +76,6 @@ pub unsafe fn get_module_base(process_id: DWORD, name: &str) -> Result<usize, &s
         }
     }
 
+    CloseHandle(handle_snap);
     Err("Couldn't get Modulebase!")
 }
