@@ -69,7 +69,7 @@ pub fn get_module_base(process_id: u32, module_name: &str) -> Option<usize> {
                 return Some(module_entry.modBaseAddr as usize);
             }
         }
-    
+        CloseHandle(h_module_snap);
     }
     None
 }
