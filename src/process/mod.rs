@@ -4,7 +4,7 @@ use std::ffi::{CString, CStr};
 use std::mem;
 use winapi::um::errhandlingapi::GetLastError;
 
-
+/// Returns an Option which contains a Process ID if present.
 pub fn get_process_id(process_name: &str) -> Option<u32> {
     unsafe {
 
@@ -12,7 +12,7 @@ pub fn get_process_id(process_name: &str) -> Option<u32> {
         let process_name = CString::new(process_name).expect("Couldn't convert process_name to CString!");
 
         if h_process_snap == INVALID_HANDLE_VALUE {
-            panic!("Last OS Error: {}", GetLastError());
+            panic!("INVALID HANDLE VALUE! Last OS Error: {}", GetLastError());
         }
 
         let mut pe32: PROCESSENTRY32 = std::mem::zeroed();
@@ -40,6 +40,7 @@ pub fn get_process_id(process_name: &str) -> Option<u32> {
     None
 }
 
+/// Returns an Option containing  the base address of a module (as usize).
 pub fn get_module_base(process_id: u32, module_name: &str) -> Option<usize> {
     unsafe {
 
@@ -48,7 +49,7 @@ pub fn get_module_base(process_id: u32, module_name: &str) -> Option<usize> {
 
         if h_module_snap == INVALID_HANDLE_VALUE {
             CloseHandle(h_module_snap);
-            panic!("Last OS Error: {}", GetLastError());
+            panic!("INVALID HANDLE VALUE! Last OS Error: {}", GetLastError());
         }
 
         let mut module_entry: MODULEENTRY32 = mem::zeroed();
